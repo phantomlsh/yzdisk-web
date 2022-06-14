@@ -1,13 +1,19 @@
 <script setup>
-let cot = $ref(0)
+import { useRouter, useRoute } from 'vue-router'
+const router = useRouter(), route = useRoute()
+const SS = window.sessionStorage
 
-function inc () {
-  cot++
+async function getDir (nid) {
 }
+
+async function init () {
+  // Todo: fetch root
+}
+
+if (SS.token) init()
+else router.push('/login')
 </script>
 
 <template>
-  <h1>Home</h1>
-  <p>cot: {{ cot }}</p>
-  <button @click="inc">Click Me</button>
+  
 </template>

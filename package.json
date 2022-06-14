@@ -1,5 +1,5 @@
 {
-  "name": "template-web",
+  "name": "yzdisk-web",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@heroicons/vue": "^1.0.6",
+    "axios": "^0.27.2",
     "vue": "^3.2.31",
     "vue-router": "^4.0.14"
   },
