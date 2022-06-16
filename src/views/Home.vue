@@ -9,7 +9,7 @@ const SS = window.sessionStorage
 const opt = () => ({ headers: { token: SS.token } })
 
 let nodes = $ref([]), dir = route.params.nid
-let breadcrumb = $ref([]), edit = $ref({})
+let breadcrumb = $ref([]), edit = $ref({}), uploading = $ref('')
 if (dir) breadcrumb.push({ _id: dir, name: '链接目录' })
 
 async function getDir () {
@@ -30,13 +30,33 @@ else router.push('/login')
 
 // display
 
-function time2Str (t) {
-  return moment(t).format('YYYY-MM-DD HH:mm:ss')
-}
-
+const time2Str = t => moment(t).format('YYYY-MM-DD HH:mm:ss')
 const short = x => x.length < 10 ? x : (x.substring(0, 8) + '...')
 
 let displayNodes = $computed(() => nodes.sort())
+
+// file operations
+
+let fileInput = $ref()
+
+async function upload (f) {
+  if (!f) return
+  uploading = f.name
+  const formData = new FormData()
+  formData.append('file', f)
+  if (dir) formData.append('dir', dir)
+  const _dir = dir
+  const res = await request.post('/yzdisk/file', formData, { headers: { 'Content-Type': 'multipart/form-data', token: SS.token } })
+  uploading = ''
+  if (!res || _dir !== dir) return
+  const ns = f.name.split('.')
+  ns.shift()
+  nodes.push({ _id: res, name: f.name, private: false, time: Date.now(), type: ns.pop() || '' })
+}
+
+function dropFile (e) {
+  upload(e.dataTransfer.files[0])
+}
 
 // navigation functions
 
@@ -46,9 +66,21 @@ async function goto (nid) {
   await getDir()
 }
 
-async function gotoDir (n) {
-  await goto(n._id)
-  breadcrumb.push(n)
+async function open (n) {
+  if (n.type === '.') { // goto dir
+    await goto(n._id)
+    breadcrumb.push(n)
+  } else { // download file
+    const res = await request.get('/yzdisk/file/' + n._id, { headers: { token: SS.token }, responseType: 'blob' })
+    if (!res) return
+    const url = window.URL.createObjectURL(new Blob([res]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', n.name)
+    document.body.appendChild(link)
+    link.click()
+    setTimeout(() => { link.remove() }, 3e3)
+  }
 }
 
 async function back () {
@@ -98,15 +130,17 @@ async function remove (n) {
 </script>
 
 <template>
-  <div class="p-4">
-    <div class="flex items-center my-3">
-      <button @click="newDir" class="all-transition mr-4 shadow bg-blue-500 text-white font-bold rounded flex items-center py-2 px-4 hover:shadow-lg">
+  <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
+  <div class="p-4 min-h-screen w-screen" @drop.prevent="dropFile" @dragenter.prevent @dragover.prevent>
+    <div class="flex items-center mt-3 mb-1">
+      <button @click="fileInput.click" class="all-transition mr-4 shadow bg-blue-500 text-white font-bold rounded flex items-center py-2 px-4 hover:shadow-lg">
         <upload-icon class="w-5 mr-1" />
         上传文件
       </button>
       <button @click="newDir" class="all-transition m-1 border border-gray-300 rounded-full p-2 hover:bg-gray-100 text-sm"><folder-add-icon class="w-5" /></button>
     </div>
-    <div class="my-2 text-gray-500"><!-- breadcrumb -->
+    <p v-if="uploading" class="text-gray-500 text-sm">正在上传 {{ uploading }}</p>
+    <div class="my-3 text-gray-500"><!-- breadcrumb -->
       <span class="cursor-pointer hover:underline" :class="!breadcrumb.length && 'text-black font-bold'" @click="gotoBreadcrumb(-1)">我的云盘</span>
       <span v-for="(b, i) in breadcrumb" @click="gotoBreadcrumb(i)">
         <span class="mx-1">/</span>
@@ -124,9 +158,9 @@ async function remove (n) {
           </td>
           <td class="w-48"></td>
         </tr>
-        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer hover:bg-gray-100 select-none group" @dblclick="gotoDir(n)">
+        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer hover:bg-gray-100 select-none group" @dblclick="open(n)">
           <td class="h-12 flex items-center">
-            <img :src="icon[n.type] || 'icon/file.svg'" class="w-6 mx-1">
+            <img :src="icon[n.type.toLowerCase()] || 'icon/file.svg'" class="w-6 mx-1">
             <div class="flex items-center px-1" :class="edit[n._id] && 'border bg-white'">
               <div :id="'name_' + n._id" :contenteditable="edit[n._id]" class="text-sm mr-2 whitespace-nowrap overflow-hidden node-name" @keydown.enter.prevent="rename(n)">{{ n.name }}</div>
               <check-icon v-if="edit[n._id]" class="w-4 text-blue-500" @click.stop="rename(n)" />
