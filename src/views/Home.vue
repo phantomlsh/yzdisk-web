@@ -3,37 +3,41 @@ import moment from 'moment'
 import request from '../utils/request.js'
 import icon from '../utils/icon.js'
 import { UploadIcon, FolderAddIcon, PencilIcon, CheckIcon, LockClosedIcon, TrashIcon } from '@heroicons/vue/outline'
-import { useRouter, useRoute } from 'vue-router'
-const router = useRouter(), route = useRoute()
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const SS = window.sessionStorage
 const opt = () => ({ headers: { token: SS.token } })
 
-let nodes = $ref([]), dir = route.params.nid
+let nodes = $ref([])
 let breadcrumb = $ref([]), edit = $ref({}), uploading = $ref('')
-if (dir) breadcrumb.push({ _id: dir, name: '链接目录' })
+if (yzdisk.dir) breadcrumb.push({ _id: yzdisk.dir, name: '链接目录' })
 
 async function getDir () {
-  const res = await request.get('/yzdisk/dir/' + (dir || ''), opt())
+  const res = await request.get('/yzdisk/dir/' + (yzdisk.dir || ''), opt())
   if (!res) return false
   return nodes = res
 }
 
 async function newDir () {
-  const res = await request.post('/yzdisk/dir', { name: '新建文件夹', dir }, opt())
+  const res = await request.post('/yzdisk/dir', { name: '新建文件夹', dir: yzdisk.dir || '' }, opt())
   if (!res) return
   nodes.push({ _id: res, type: '.', name: '新建文件夹', time: Date.now(), private: false })
   edit[res] = true
 }
 
 if (SS.token) getDir()
-else router.push('/login')
+else router.push('/@')
 
 // display
 
 const time2Str = t => moment(t).format('YYYY-MM-DD HH:mm:ss')
 const short = x => x.length < 10 ? x : (x.substring(0, 8) + '...')
 
-let displayNodes = $computed(() => nodes.sort())
+let displayNodes = $computed(() => nodes.sort((x, y) => {
+  if (x.type === '.' && y.type !== '.') return -1
+  if (y.type === '.' && x.type !== '.') return 1
+  return x.name.toLowerCase() < y.name.toLowerCase() ? -1 : 1
+}))
 
 // file operations
 
@@ -44,11 +48,11 @@ async function upload (f) {
   uploading = f.name
   const formData = new FormData()
   formData.append('file', f)
-  if (dir) formData.append('dir', dir)
-  const _dir = dir
+  if (yzdisk.dir) formData.append('dir', yzdisk.dir)
+  const _dir = yzdisk.dir
   const res = await request.post('/yzdisk/file', formData, { headers: { 'Content-Type': 'multipart/form-data', token: SS.token } })
   uploading = ''
-  if (!res || _dir !== dir) return
+  if (!res || _dir !== yzdisk.dir) return
   const ns = f.name.split('.')
   ns.shift()
   nodes.push({ _id: res, name: f.name, private: false, time: Date.now(), type: ns.pop() || '' })
@@ -61,8 +65,7 @@ function dropFile (e) {
 // navigation functions
 
 async function goto (nid) {
-  router.push('/' + (nid || ''))
-  dir = nid || ''
+  yzdisk.dir = nid || ''
   await getDir()
 }
 
@@ -106,13 +109,25 @@ async function rename (n) {
 }
 
 async function lock (n) {
+  if (!n.private) {
+    const { isConfirmed } = await Swal.fire({
+      title: '确认改为私有',
+      html: '私有文件或目录不能通过链接访问，改为私有会终止其他系统和用户对该内容的访问权限，可能导致您在其他系统上的文件失效',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '确认',
+      confirmButtonColor: '#D22B2B',
+      cancelButtonText: '取消'
+    })
+    if (!isConfirmed) return
+  }
   const res = await request.put(`/yzdisk/${n.type === '.' ? 'dir' : 'file'}/${n._id}`, { private: !n.private }, opt())
   if (!res) return
   n.private = !n.private
 }
 
 async function remove (n) {
-  const isFile = n.type !== '.'
+  const isFile = (n.type !== '.')
   const { isConfirmed } = await Swal.fire({
     title: '确认删除' + (isFile ? '文件' : '目录'),
     html: isFile ? `即将删除文件<code>${short(n.name)}</code>` : `即将删除目录<code>${short(n.name)}</code>的全部内容`,
@@ -164,9 +179,9 @@ async function remove (n) {
             <div class="flex items-center px-1" :class="edit[n._id] && 'border bg-white'">
               <div :id="'name_' + n._id" :contenteditable="edit[n._id]" class="text-sm mr-2 whitespace-nowrap overflow-hidden node-name" @keydown.enter.prevent="rename(n)">{{ n.name }}</div>
               <check-icon v-if="edit[n._id]" class="w-4 text-blue-500" @click.stop="rename(n)" />
-              <pencil-icon v-else @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" v-tooltip="'重命名'" />
+              <pencil-icon v-else @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" />
             </div>
-            <lock-closed-icon :class="n.private ? 'text-blue-500' : 'invisible'" class="group-hover:visible w-4 text-gray-500" @click.stop="lock(n)" v-tooltip="'私有文件'" />
+            <lock-closed-icon :class="n.private ? 'text-blue-500' : 'invisible'" class="group-hover:visible w-4 text-gray-500" @click.stop="lock(n)" />
           </td>
           <td class="text-center text-gray-500 text-sm w-6 sm:w-48">
             <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
@@ -178,7 +193,7 @@ async function remove (n) {
       </table>
       <div v-if="!nodes.length" class="mt-20 w-full flex flex-col items-center justify-center">
         <img src="icon/cloud.svg" >
-        <p class="text-gray-500">这里还是空空的</p>
+        <p class="text-gray-500">白云一片去悠悠，这里什么也没有</p>
       </div>
     </div>
   </div>

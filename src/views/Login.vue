@@ -9,14 +9,16 @@ const login = () => window.open('https://cn.aauth.link/#/launch/yzdisk', 'aauth'
 window.onmessage = e => {
   if (e.origin !== 'https://cn.aauth.link') return
   SS.token = e.data.token
-  router.push(c || '/')
+  router.push('/')
 }
+
+if (route.query.dir) yzdisk.dir = route.query.dir
 
 if (token) {
   SS.token = token
-  router.push(c || '/')
+  router.push('/')
 } else if (SS.token) {
-  router.push(c || '/')
+  router.push('/')
 } else {
   login()
 }

@@ -3,7 +3,6 @@ import App from './App.vue'
 import router from './router.js'
 import './index.css'
 
-import FloatingVue from 'floating-vue'
-import 'floating-vue/dist/style.css'
+window.yzdisk = {}
 
-createApp(App).use(router).use(FloatingVue).mount('#app')
+createApp(App).use(router).mount('#app')
