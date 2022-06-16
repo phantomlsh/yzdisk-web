@@ -24,3 +24,8 @@ body {
 .fade-leave-to {
   opacity: 0;
 }
+
+/* tooltip */
+.v-popper__inner {
+  font-size: 0.6rem;
+}

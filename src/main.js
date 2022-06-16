@@ -3,4 +3,7 @@ import App from './App.vue'
 import router from './router.js'
 import './index.css'
 
-createApp(App).use(router).mount('#app')
+import FloatingVue from 'floating-vue'
+import 'floating-vue/dist/style.css'
+
+createApp(App).use(router).use(FloatingVue).mount('#app')
