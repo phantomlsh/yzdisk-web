@@ -3,7 +3,6 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter(), route = useRoute()
 
 const SS = window.sessionStorage
-const token = route.query.token, c = route.query.c
 
 const login = () => window.open('https://cn.aauth.link/#/launch/yzdisk', 'aauth', 'width=400,height=800,top=50,left=50')
 window.onmessage = e => {
@@ -12,16 +11,15 @@ window.onmessage = e => {
   router.push('/')
 }
 
-if (route.query.dir) yzdisk.dir = route.query.dir
-
-if (token) {
-  SS.token = token
-  router.push('/')
-} else if (SS.token) {
-  router.push('/')
-} else {
-  login()
+window.yzdisk = {
+  dir: route.query.dir || '',
+  select: route.query.select
 }
+
+if (route.query.token) SS.token = req.query.token
+
+if (SS.token) router.push('/')
+else login()
 </script>
 
 <template>

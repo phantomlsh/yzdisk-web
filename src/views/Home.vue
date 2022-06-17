@@ -2,11 +2,13 @@
 import moment from 'moment'
 import request from '../utils/request.js'
 import icon from '../utils/icon.js'
-import { UploadIcon, FolderAddIcon, PencilIcon, CheckIcon, LockClosedIcon, TrashIcon } from '@heroicons/vue/outline'
+import { UploadIcon, FolderAddIcon, PencilIcon, CheckIcon, TrashIcon, XIcon } from '@heroicons/vue/outline'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const SS = window.sessionStorage
 const opt = () => ({ headers: { token: SS.token } })
+
+let yzdisk = window.yzdisk
 
 let nodes = $ref([])
 let breadcrumb = $ref([]), edit = $ref({}), uploading = $ref('')
@@ -18,20 +20,13 @@ async function getDir () {
   return nodes = res
 }
 
-async function newDir () {
-  const res = await request.post('/yzdisk/dir', { name: '新建文件夹', dir: yzdisk.dir || '' }, opt())
-  if (!res) return
-  nodes.push({ _id: res, type: '.', name: '新建文件夹', time: Date.now(), private: false })
-  edit[res] = true
-}
-
 if (SS.token) getDir()
 else router.push('/@')
 
 // display
 
 const time2Str = t => moment(t).format('YYYY-MM-DD HH:mm:ss')
-const short = x => x.length < 10 ? x : (x.substring(0, 8) + '...')
+const short = (x, l = 8) => x.length < (l + 2) ? x : (x.substring(0, l) + '...')
 
 let displayNodes = $computed(() => nodes.sort((x, y) => {
   if (x.type === '.' && y.type !== '.') return -1
@@ -66,11 +61,18 @@ function dropFile (e) {
   upload(e.dataTransfer.files[0])
 }
 
-// navigation functions
+// other operations
 
 async function goto (nid) {
   yzdisk.dir = nid || ''
   await getDir()
+}
+
+async function newDir () {
+  const res = await request.post('/yzdisk/dir', { name: '新建文件夹', dir: yzdisk.dir || '' }, opt())
+  if (!res) return
+  nodes.push({ _id: res, type: '.', name: '新建文件夹', time: Date.now(), private: false })
+  edit[res] = true
 }
 
 async function open (n) {
@@ -113,24 +115,6 @@ async function rename (n) {
   if (n.type !== '.') n.type = getType(n.name)
 }
 
-async function lock (n) {
-  if (!n.private) {
-    const { isConfirmed } = await Swal.fire({
-      title: '确认改为私有',
-      html: '私有文件或目录不能通过链接访问，改为私有会终止其他系统和用户对该内容的访问权限，可能导致您在其他系统上的文件失效',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: '确认',
-      confirmButtonColor: '#D22B2B',
-      cancelButtonText: '取消'
-    })
-    if (!isConfirmed) return
-  }
-  const res = await request.put(`/yzdisk/${n.type === '.' ? 'dir' : 'file'}/${n._id}`, { private: !n.private }, opt())
-  if (!res) return
-  n.private = !n.private
-}
-
 async function remove (n) {
   const isFile = (n.type !== '.')
   const { isConfirmed } = await Swal.fire({
@@ -147,10 +131,47 @@ async function remove (n) {
   if (!res) return
   nodes = nodes.filter(x => x._id !== n._id)
 }
+
+// select
+let selected = $ref({})
+let selectOK = $computed(() => {
+  if (!yzdisk.select) return false
+  if (yzdisk.select == 1) return Object.keys(selected).length === 1
+  return Object.keys(selected).length
+})
+
+function select (n) {
+  if (selected[n._id]) {
+    delete selected[n._id]
+    return
+  }
+  if (!yzdisk.select) return
+  if (yzdisk.select == 1) {
+    if (n.type === '.') return
+    return selected = { [n._id]: n }
+  }
+  if (n.type === '.') return
+  selected[n._id] = n
+}
+
+function submit () {
+}
 </script>
 
 <template>
   <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
+  <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-56 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="yzdisk.select"><!-- select -->
+    <div class="text-sm text-white font-bold bg-gray-800 p-2">请选择文件</div>
+    <div v-for="(n, _id) in selected" class="border border-x-0 flex items-center justify-between p-2">
+      <span>{{ short(n.name, 12) }}</span>
+      <x-icon class="w-5 text-red-500 cursor-pointer" @click="delete selected[n._id]" />
+    </div>
+    <div v-if="selectOK" class="flex items-center justify-end p-1">
+      <button class="all-transition text-sm text-blue-500 font-bold rounded flex items-center py-1 px-2">
+        <check-icon class="w-5 mr-1" />确认
+      </button>
+    </div>
+  </div>
   <div class="p-4 min-h-screen w-screen select-none" @drop.prevent="dropFile" @dragenter.prevent @dragover.prevent>
     <div class="flex items-center mt-3 mb-1">
       <button @click="fileInput.click" class="all-transition mr-4 shadow bg-blue-500 text-white font-bold rounded flex items-center py-2 px-4 hover:shadow-lg">
@@ -178,15 +199,14 @@ async function remove (n) {
           </td>
           <td class="w-48"></td>
         </tr>
-        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer hover:bg-gray-100 group" @dblclick="open(n)">
+        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer group" :class="selected[n._id] ? 'bg-blue-100' : 'hover:bg-gray-100'" @dblclick="open(n)" @click="select(n)">
           <td class="h-12 flex items-center">
-            <img :src="icon[n.type.toLowerCase()] || 'icon/file.svg'" class="w-6 mx-1">
+            <img :src="selected[n._id] ? 'icon/check.svg' : (icon[n.type.toLowerCase()] || 'icon/file.svg')" class="w-6 mx-1">
             <div class="flex items-center px-1" :class="edit[n._id] && 'border bg-white'">
               <div :id="'name_' + n._id" :contenteditable="edit[n._id]" class="text-sm mr-2 whitespace-nowrap overflow-hidden node-name" @keydown.enter.prevent="rename(n)">{{ n.name }}</div>
               <check-icon v-if="edit[n._id]" class="w-4 text-blue-500" @click.stop="rename(n)" />
               <pencil-icon v-else @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" />
             </div>
-            <lock-closed-icon :class="n.private ? 'text-blue-500' : 'invisible'" class="group-hover:visible w-4 text-gray-500" @click.stop="lock(n)" />
           </td>
           <td class="text-center text-gray-500 text-sm w-6 sm:w-48">
             <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
