@@ -43,6 +43,12 @@ let displayNodes = $computed(() => nodes.sort((x, y) => {
 
 let fileInput = $ref()
 
+function getType (name) {
+  const ns = name.split('.')
+  ns.shift()
+  return ns.pop() || ''
+}
+
 async function upload (f) {
   if (!f) return
   uploading = f.name
@@ -53,9 +59,7 @@ async function upload (f) {
   const res = await request.post('/yzdisk/file', formData, { headers: { 'Content-Type': 'multipart/form-data', token: SS.token } })
   uploading = ''
   if (!res || _dir !== yzdisk.dir) return
-  const ns = f.name.split('.')
-  ns.shift()
-  nodes.push({ _id: res, name: f.name, private: false, time: Date.now(), type: ns.pop() || '' })
+  nodes.push({ _id: res, name: f.name, private: false, time: Date.now(), type: getType(f.name) })
 }
 
 function dropFile (e) {
@@ -106,6 +110,7 @@ async function rename (n) {
   const res = await request.put(`/yzdisk/${n.type === '.' ? 'dir' : 'file'}/${n._id}`, { name }, opt())
   if (!res) return
   n.name = name
+  if (n.type !== '.') n.type = getType(n.name)
 }
 
 async function lock (n) {
@@ -146,7 +151,7 @@ async function remove (n) {
 
 <template>
   <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
-  <div class="p-4 min-h-screen w-screen" @drop.prevent="dropFile" @dragenter.prevent @dragover.prevent>
+  <div class="p-4 min-h-screen w-screen select-none" @drop.prevent="dropFile" @dragenter.prevent @dragover.prevent>
     <div class="flex items-center mt-3 mb-1">
       <button @click="fileInput.click" class="all-transition mr-4 shadow bg-blue-500 text-white font-bold rounded flex items-center py-2 px-4 hover:shadow-lg">
         <upload-icon class="w-5 mr-1" />
@@ -168,12 +173,12 @@ async function remove (n) {
           <td class="h-10">
             <div class="px-2 flex items-center">
               <img src="icon/return.png" class="w-6">
-              <div class="mx-2 text-sm select-none">返回上级目录</div>
+              <div class="mx-2 text-sm">返回上级目录</div>
             </div>
           </td>
           <td class="w-48"></td>
         </tr>
-        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer hover:bg-gray-100 select-none group" @dblclick="open(n)">
+        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer hover:bg-gray-100 group" @dblclick="open(n)">
           <td class="h-12 flex items-center">
             <img :src="icon[n.type.toLowerCase()] || 'icon/file.svg'" class="w-6 mx-1">
             <div class="flex items-center px-1" :class="edit[n._id] && 'border bg-white'">
@@ -185,7 +190,7 @@ async function remove (n) {
           </td>
           <td class="text-center text-gray-500 text-sm w-6 sm:w-48">
             <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
-            <div class="hidden group-hover:flex items-center justify-end px-2">
+            <div class="hidden group-hover:flex items-center justify-center px-2">
               <trash-icon class="w-5 text-red-500" @click.stop="remove(n)" />
             </div>
           </td>
@@ -193,7 +198,7 @@ async function remove (n) {
       </table>
       <div v-if="!nodes.length" class="mt-20 w-full flex flex-col items-center justify-center">
         <img src="icon/cloud.svg" >
-        <p class="text-gray-500">白云一片去悠悠，这里什么也没有</p>
+        <p class="text-gray-500 text-sm">白云一片去悠悠，这里什么也没有</p>
       </div>
     </div>
   </div>
