@@ -13,9 +13,9 @@ window.onmessage = e => {
 
 window.yzdisk = {
   dir: route.query.dir || '',
-  select: route.query.select
 }
 
+if (route.query.select && (window.opener || window.parent)) window.yzdisk.select = route.query.select
 if (route.query.token) SS.token = req.query.token
 
 if (SS.token) router.push('/')

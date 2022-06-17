@@ -119,7 +119,7 @@ async function remove (n) {
   const isFile = (n.type !== '.')
   const { isConfirmed } = await Swal.fire({
     title: '确认删除' + (isFile ? '文件' : '目录'),
-    html: isFile ? `即将删除文件<code>${short(n.name)}</code>` : `即将删除目录<code>${short(n.name)}</code>的全部内容`,
+    html: isFile ? `即将删除文件<code>${short(n.name, 16)}</code>` : `即将删除目录<code>${short(n.name, 16)}</code>的全部内容`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonText: '确认删除',
@@ -146,15 +146,17 @@ function select (n) {
     return
   }
   if (!yzdisk.select) return
-  if (yzdisk.select == 1) {
-    if (n.type === '.') return
-    return selected = { [n._id]: n }
-  }
   if (n.type === '.') return
+  if (yzdisk.select == 1) return selected = { [n._id]: n }
   selected[n._id] = n
 }
 
-function submit () {
+function submitSelect () {
+  const payload = []
+  for (const id in selected) payload.push(selected[id])
+  if (!window.opener && !window.parent) return
+  (window.opener || window.parent).postMessage(JSON.parse(JSON.stringify(payload)), '*')
+  window.close()
 }
 </script>
 
@@ -167,9 +169,7 @@ function submit () {
       <x-icon class="w-5 text-red-500 cursor-pointer" @click="delete selected[n._id]" />
     </div>
     <div v-if="selectOK" class="flex items-center justify-end p-1">
-      <button class="all-transition text-sm text-blue-500 font-bold rounded flex items-center py-1 px-2">
-        <check-icon class="w-5 mr-1" />确认
-      </button>
+      <button class="all-transition text-sm text-blue-500 font-bold rounded flex items-center py-1 px-2" @click="submitSelect"><check-icon class="w-5 mr-1" />确认</button>
     </div>
   </div>
   <div class="p-4 min-h-screen w-screen select-none" @drop.prevent="dropFile" @dragenter.prevent @dragover.prevent>
