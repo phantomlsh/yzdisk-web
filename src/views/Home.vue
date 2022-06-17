@@ -138,7 +138,7 @@ async function remove (n) {
     cancelButtonText: '取消'
   })
   if (!isConfirmed) return
-  const res = await request.delete(`/yzdisk/${n.type === '.' ? 'dir' : 'file'}/${n._id}`, opt())
+  const res = await request.put(`/yzdisk/${n.type === '.' ? 'dir' : 'file'}/${n._id}`, { dir: '' }, opt())
   if (!res) return
   nodes = nodes.filter(x => x._id !== n._id)
 }
