@@ -2,7 +2,7 @@
 import moment from 'moment'
 import request from '../utils/request.js'
 import icon from '../utils/icon.js'
-import { UploadIcon, FolderAddIcon, PencilIcon, CheckIcon, TrashIcon, XIcon } from '@heroicons/vue/outline'
+import { UploadIcon, FolderAddIcon, PencilIcon, CheckIcon, TrashIcon, XIcon, LinkIcon, LoginIcon } from '@heroicons/vue/outline'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const SS = window.sessionStorage
@@ -26,7 +26,22 @@ else router.push('/@')
 // display
 
 const time2Str = t => moment(t).format('YYYY-MM-DD HH:mm:ss')
-const short = (x, l = 8) => x.length < (l + 2) ? x : (x.substring(0, l) + '...')
+const getType = name => {
+  const ns = name.split('.')
+  ns.shift()
+  return ns.pop() || ''
+}
+const short = (x, l = 8) => {
+  const type = getType(x)
+  if (x.length - type.length < l) return x
+  return x.substring(0, l) + '...' + type
+}
+
+function rowClass (n) {
+  let res = selected[n._id] ? 'bg-blue-100' : 'hover:bg-gray-100'
+  if (moving?._id === n._id) res += ' opacity-50'
+  return res
+}
 
 let displayNodes = $computed(() => nodes.sort((x, y) => {
   if (x.type === '.' && y.type !== '.') return -1
@@ -36,13 +51,7 @@ let displayNodes = $computed(() => nodes.sort((x, y) => {
 
 // file operations
 
-let fileInput = $ref()
-
-function getType (name) {
-  const ns = name.split('.')
-  ns.shift()
-  return ns.pop() || ''
-}
+let fileInput = $ref(), copyInput = $ref()
 
 async function upload (f) {
   if (!f) return
@@ -77,6 +86,7 @@ async function newDir () {
 
 async function open (n) {
   if (n.type === '.') { // goto dir
+    if (n._id === moving?._id) return
     await goto(n._id)
     breadcrumb.push(n)
   } else { // download file
@@ -132,7 +142,29 @@ async function remove (n) {
   nodes = nodes.filter(x => x._id !== n._id)
 }
 
+function copy (n) {
+  copyInput.setAttribute('type', 'text')
+  copyInput.value = window.location.origin + `/#/@?${n.type === '.' ? 'dir' : 'file'}=${n._id}`
+  copyInput.select()
+  document.execCommand('copy')
+  copyInput.setAttribute('type', 'hidden')
+  window.getSelection().removeAllRanges()
+  Swal.fire('链接已复制', '链接具有访问权限，请谨慎使用', 'success')
+}
+
+// move
+let moving = $ref(null)
+async function move () {
+  if (!moving) return
+  const res = await request.put(`/yzdisk/${moving.type === '.' ? 'dir' : 'file'}/${moving._id}`, { dir: yzdisk.dir || SS.id }, opt())
+  if (!res) return
+  nodes = nodes.filter(x => x._id !== moving._id)
+  nodes.push(moving)
+  moving = null
+}
+
 // select
+
 let selected = $ref({})
 let selectOK = $computed(() => {
   if (!yzdisk.select) return false
@@ -162,10 +194,12 @@ function submitSelect () {
 
 <template>
   <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
-  <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-56 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="yzdisk.select"><!-- select -->
+  <input type="hidden" ref="copyInput">
+  <button v-if="moving" class="all-transition rounded-full fixed top-2 right-2 bg-white sm:top-5 sm:right-5 shadow-md hover:shadow-lg text-sm text-blue-500 bg-gray-100 font-bold rounded flex items-center py-2 px-4" @click="move"><login-icon class="w-5 mr-1" />粘贴{{ moving.type === '.' ? '目录' : '文件' }}</button>
+  <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-60 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="yzdisk.select"><!-- select -->
     <div class="text-sm text-white font-bold bg-gray-800 p-2">请选择文件</div>
     <div v-for="(n, _id) in selected" class="border border-x-0 flex items-center justify-between p-2">
-      <span>{{ short(n.name, 12) }}</span>
+      <span>{{ short(n.name, 9) }}</span>
       <x-icon class="w-5 text-red-500 cursor-pointer" @click="delete selected[n._id]" />
     </div>
     <div v-if="selectOK" class="flex items-center justify-end p-1">
@@ -197,9 +231,9 @@ function submitSelect () {
               <div class="mx-2 text-sm">返回上级目录</div>
             </div>
           </td>
-          <td class="w-48"></td>
+          <td></td>
         </tr>
-        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer group" :class="selected[n._id] ? 'bg-blue-100' : 'hover:bg-gray-100'" @dblclick="open(n)" @click="select(n)">
+        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer group" :class="rowClass(n)" @dblclick="open(n)" @click="select(n)">
           <td class="h-12 flex items-center">
             <img :src="selected[n._id] ? 'icon/check.svg' : (icon[n.type.toLowerCase()] || 'icon/file.svg')" class="w-6 mx-1">
             <div class="flex items-center px-1" :class="edit[n._id] && 'border bg-white'">
@@ -208,9 +242,11 @@ function submitSelect () {
               <pencil-icon v-else @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" />
             </div>
           </td>
-          <td class="text-center text-gray-500 text-sm w-6 sm:w-48">
+          <td class="text-center text-gray-500 text-sm w-10 sm:w-48">
             <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
-            <div class="hidden group-hover:flex items-center justify-center px-2">
+            <div class="flex sm:hidden group-hover:flex items-center justify-center px-2">
+              <login-icon class="w-5 mr-1 text-gray-500" @click.stop="moving = n" />
+              <link-icon class="w-5 mr-1 text-blue-500" @click.stop="copy(n)" />
               <trash-icon class="w-5 text-red-500" @click.stop="remove(n)" />
             </div>
           </td>
@@ -230,7 +266,7 @@ function submitSelect () {
 }
 @media (max-width: 640px) {
   .node-name {
-    max-width: calc(100vw - 10rem);
+    max-width: calc(100vw - 12rem);
   }
 }
 </style>

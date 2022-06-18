@@ -3,12 +3,27 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter(), route = useRoute()
 
 const SS = window.sessionStorage
+function decode (input) {
+  if (!input) return {}
+  input = input.replace(/-/g, '+').replace(/_/g, '/')
+  const pad = input.length % 4
+  if (pad) input += new Array(5 - pad).join('=')
+  return JSON.parse(atob(input))
+}
+
+function success () {
+  delete SS.id
+  const r = SS.token.split('.')
+  const payload = decode(r[1])
+  SS.id = payload.id
+  router.push('/')
+}
 
 const login = () => window.open('https://cn.aauth.link/#/launch/yzdisk', 'aauth', 'width=400,height=800,top=50,left=50')
 window.onmessage = e => {
   if (e.origin !== 'https://cn.aauth.link') return
   SS.token = e.data.token
-  router.push('/')
+  success()
 }
 
 window.yzdisk = {
@@ -18,7 +33,7 @@ window.yzdisk = {
 if (route.query.select && (window.opener || window.parent)) window.yzdisk.select = route.query.select
 if (route.query.token) SS.token = req.query.token
 
-if (SS.token) router.push('/')
+if (SS.token) success()
 else login()
 </script>
 
