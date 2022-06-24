@@ -12,7 +12,7 @@ let yzdisk = window.yzdisk
 
 let nodes = $ref([])
 let breadcrumb = $ref([]), edit = $ref({}), uploading = $ref('')
-if (yzdisk.dir) breadcrumb.push({ _id: yzdisk.dir, name: '链接目录' })
+if (yzdisk.dir) breadcrumb.push({ _id: yzdisk.dir, name: '链接目录', external: true })
 
 async function getDir () {
   const res = await request.get('/yzdisk/dir/' + (yzdisk.dir || ''), opt())
@@ -48,6 +48,13 @@ let displayNodes = $computed(() => nodes.sort((x, y) => {
   if (y.type === '.' && x.type !== '.') return 1
   return x.name.toLowerCase() < y.name.toLowerCase() ? -1 : 1
 }))
+
+let isExternal = $computed(() => {
+  for (const b of breadcrumb) {
+    if (b.external) return true
+  }
+  return false
+})
 
 // file operations
 
@@ -239,15 +246,15 @@ function submitSelect () {
             <div class="flex items-center px-1" :class="edit[n._id] && 'border bg-white'">
               <div :id="'name_' + n._id" :contenteditable="edit[n._id]" class="text-sm mr-2 whitespace-nowrap overflow-hidden node-name" @keydown.enter.prevent="rename(n)">{{ n.name }}</div>
               <check-icon v-if="edit[n._id]" class="w-4 text-blue-500" @click.stop="rename(n)" />
-              <pencil-icon v-else @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" />
+              <pencil-icon v-if="!isExternal && !edit[n._id]" @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" />
             </div>
           </td>
           <td class="text-center text-gray-500 text-sm w-10 sm:w-48">
             <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
             <div class="flex sm:hidden group-hover:flex items-center justify-center px-2">
-              <login-icon class="w-5 mr-1 text-gray-500" @click.stop="moving = n" />
+              <login-icon v-if="!isExternal" class="w-5 mr-1 text-gray-500" @click.stop="moving = n" />
               <link-icon class="w-5 mr-1 text-blue-500" @click.stop="copy(n)" />
-              <trash-icon class="w-5 text-red-500" @click.stop="remove(n)" />
+              <trash-icon v-if="!isExternal" class="w-5 text-red-500" @click.stop="remove(n)" />
             </div>
           </td>
         </tr>
@@ -259,7 +266,7 @@ function submitSelect () {
     </div>
   </div>
 </template>
-
+ v-if="!isExternal"
 <style scoped>
 .node-name {
   max-width: calc(100vw - 24rem);
