@@ -8,14 +8,16 @@ const router = useRouter()
 const SS = window.sessionStorage
 const opt = () => ({ headers: { token: SS.token } })
 
-let yzdisk = window.yzdisk
-
-let nodes = $ref([])
+let nodes = $ref([]), dir = $ref('')
 let breadcrumb = $ref([]), edit = $ref({}), uploading = $ref('')
-if (yzdisk.dir) breadcrumb.push({ _id: yzdisk.dir, name: '链接目录', external: true })
+if (SS.dir) {
+  dir = SS.dir
+  SS.dir = ''
+  breadcrumb.push({ _id: dir, name: '链接目录', external: true })
+}
 
 async function getDir () {
-  const res = await request.get('/yzdisk/dir/' + (yzdisk.dir || ''), opt())
+  const res = await request.get('/yzdisk/dir/' + (dir || ''), opt())
   if (!res) return false
   return nodes = res
 }
@@ -65,11 +67,11 @@ async function upload (f) {
   uploading = f.name
   const formData = new FormData()
   formData.append('file', f)
-  if (yzdisk.dir) formData.append('dir', yzdisk.dir)
-  const _dir = yzdisk.dir
+  if (dir) formData.append('dir', dir)
+  const _dir = dir
   const res = await request.post('/yzdisk/file', formData, { headers: { 'Content-Type': 'multipart/form-data', token: SS.token } })
   uploading = ''
-  if (!res || _dir !== yzdisk.dir) return
+  if (!res || _dir !== dir) return
   nodes.push({ _id: res, name: f.name, private: false, time: Date.now(), type: getType(f.name) })
 }
 
@@ -80,12 +82,12 @@ function dropFile (e) {
 // other operations
 
 async function goto (nid) {
-  yzdisk.dir = nid || ''
+  dir = nid || ''
   await getDir()
 }
 
 async function newDir () {
-  const res = await request.post('/yzdisk/dir', { name: '新建文件夹', dir: yzdisk.dir || '' }, opt())
+  const res = await request.post('/yzdisk/dir', { name: '新建文件夹', dir: dir || '' }, opt())
   if (!res) return
   nodes.push({ _id: res, type: '.', name: '新建文件夹', time: Date.now(), private: false })
   edit[res] = true
@@ -163,7 +165,7 @@ function copy (n) {
 let moving = $ref(null)
 async function move () {
   if (!moving) return
-  const res = await request.put(`/yzdisk/${moving.type === '.' ? 'dir' : 'file'}/${moving._id}`, { dir: yzdisk.dir || SS.id }, opt())
+  const res = await request.put(`/yzdisk/${moving.type === '.' ? 'dir' : 'file'}/${moving._id}`, { dir: dir || SS.id }, opt())
   if (!res) return
   nodes = nodes.filter(x => x._id !== moving._id)
   nodes.push(moving)
@@ -184,9 +186,9 @@ function select (n) {
     delete selected[n._id]
     return
   }
-  if (!yzdisk.select) return
+  if (!SS.select) return
   if (n.type === '.') return
-  if (yzdisk.select == 1) return selected = { [n._id]: n }
+  if (SS.select == 1) return selected = { [n._id]: n }
   selected[n._id] = n
 }
 
@@ -203,7 +205,7 @@ function submitSelect () {
   <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
   <input type="hidden" ref="copyInput">
   <button v-if="moving" class="all-transition rounded-full fixed top-2 right-2 bg-white sm:top-5 sm:right-5 shadow-md hover:shadow-lg text-sm text-blue-500 bg-gray-100 font-bold rounded flex items-center py-2 px-4" @click="move"><login-icon class="w-5 mr-1" />粘贴{{ moving.type === '.' ? '目录' : '文件' }}</button>
-  <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-60 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="yzdisk.select"><!-- select -->
+  <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-60 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="SS.select"><!-- select -->
     <div class="text-sm text-white font-bold bg-gray-800 p-2">请选择文件</div>
     <div v-for="(n, _id) in selected" class="border border-x-0 flex items-center justify-between p-2">
       <span>{{ short(n.name, 9) }}</span>
