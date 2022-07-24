@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '',
-  plugins: [vue({ script: { refSugar: true } })],
+  plugins: [vue({ reactivityTransform: true })],
   server: {
     proxy: {
       '/yzdisk': {

@@ -225,7 +225,9 @@ function submitSelect () {
     </div>
     <p v-if="uploading" class="text-gray-500 text-sm">正在上传 {{ uploading }}</p>
     <div class="my-3 text-gray-500"><!-- breadcrumb -->
-      <span class="cursor-pointer hover:underline" :class="!breadcrumb.length && 'text-black font-bold'" @click="gotoBreadcrumb(-1)">我的云盘</span>
+      <span class="cursor-pointer hover:underline" :class="!breadcrumb.length && 'text-black font-bold'" @click="gotoBreadcrumb(-1)">
+        <img src="favicon.ico" class="w-4 mr-1 inline">我的云盘
+      </span>
       <span v-for="(b, i) in breadcrumb" @click="gotoBreadcrumb(i)">
         <span class="mx-1">/</span>
         <span class="cursor-pointer hover:underline" :class="breadcrumb.length === i + 1 && 'text-black font-bold'">{{ short(b.name) }}</span>
