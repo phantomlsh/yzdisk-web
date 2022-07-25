@@ -204,24 +204,24 @@ function submitSelect () {
 <template>
   <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
   <input type="hidden" ref="copyInput">
-  <button v-if="moving" class="all-transition rounded-full fixed top-2 right-2 bg-white sm:top-5 sm:right-5 shadow-md hover:shadow-lg text-sm text-blue-500 bg-gray-100 font-bold rounded flex items-center py-2 px-4" @click="move"><login-icon class="w-5 mr-1" />粘贴{{ moving.type === '.' ? '目录' : '文件' }}</button>
+  <button v-if="moving" class="all-transition rounded-full fixed top-2 right-2 bg-white sm:top-5 sm:right-5 shadow-md hover:shadow-lg text-sm text-blue-500 bg-gray-100 font-bold rounded flex items-center py-2 px-4" @click="move"><LoginIcon class="w-5 mr-1" />粘贴{{ moving.type === '.' ? '目录' : '文件' }}</button>
   <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-60 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="SS.select"><!-- select -->
     <div class="text-sm text-white font-bold bg-gray-800 p-2">请选择文件</div>
     <div v-for="(n, _id) in selected" class="border border-x-0 flex items-center justify-between p-2">
       <span>{{ short(n.name, 9) }}</span>
-      <x-icon class="w-5 text-red-500 cursor-pointer" @click="delete selected[n._id]" />
+      <XIcon class="w-5 text-red-500 cursor-pointer" @click="delete selected[n._id]" />
     </div>
     <div v-if="selectOK" class="flex items-center justify-end p-1">
-      <button class="all-transition text-sm text-blue-500 font-bold rounded flex items-center py-1 px-2" @click="submitSelect"><check-icon class="w-5 mr-1" />确认</button>
+      <button class="all-transition text-sm text-blue-500 font-bold rounded flex items-center py-1 px-2" @click="submitSelect"><CheckIcon class="w-5 mr-1" />确认</button>
     </div>
   </div>
   <div class="p-4 min-h-screen w-screen select-none" @drop.prevent="dropFile" @dragenter.prevent @dragover.prevent>
     <div class="flex items-center mt-3 mb-1">
       <button @click="fileInput.click" class="all-transition mr-4 shadow bg-blue-500 text-white font-bold rounded flex items-center py-2 px-4 hover:shadow-lg">
-        <upload-icon class="w-5 mr-1" />
+        <UploadIcon class="w-5 mr-1" />
         上传文件
       </button>
-      <button @click="newDir" class="all-transition m-1 border border-gray-300 rounded-full p-2 hover:bg-gray-100 text-sm"><folder-add-icon class="w-5" /></button>
+      <button @click="newDir" class="all-transition m-1 border border-gray-300 rounded-full p-2 hover:bg-gray-100 text-sm"><FolderAddIcon class="w-5" /></button>
     </div>
     <p v-if="uploading" class="text-gray-500 text-sm">正在上传 {{ uploading }}</p>
     <div class="my-3 text-gray-500"><!-- breadcrumb -->
@@ -249,16 +249,16 @@ function submitSelect () {
             <img :src="selected[n._id] ? 'icon/check.svg' : (icon[n.type.toLowerCase()] || 'icon/file.svg')" class="w-6 mx-1">
             <div class="flex items-center px-1" :class="edit[n._id] && 'border bg-white'">
               <div :id="'name_' + n._id" :contenteditable="edit[n._id]" class="text-sm mr-2 whitespace-nowrap overflow-hidden node-name" @keydown.enter.prevent="rename(n)">{{ n.name }}</div>
-              <check-icon v-if="edit[n._id]" class="w-4 text-blue-500" @click.stop="rename(n)" />
-              <pencil-icon v-if="!isExternal && !edit[n._id]" @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" />
+              <CheckIcon v-if="edit[n._id]" class="w-4 text-blue-500" @click.stop="rename(n)" />
+              <PencilIcon v-if="!isExternal && !edit[n._id]" @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" />
             </div>
           </td>
           <td class="text-center text-gray-500 text-sm w-10 sm:w-48">
             <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
             <div class="flex sm:hidden group-hover:flex items-center justify-center px-2">
-              <login-icon v-if="!isExternal" class="w-5 mr-1 text-gray-500" @click.stop="moving = n" />
-              <link-icon class="w-5 mr-1 text-blue-500" @click.stop="copy(n)" />
-              <trash-icon v-if="!isExternal" class="w-5 text-red-500" @click.stop="remove(n)" />
+              <LoginIcon v-if="!isExternal" class="w-5 mr-1 text-gray-500" @click.stop="moving = n" />
+              <LinkIcon class="w-5 mr-1 text-blue-500" @click.stop="copy(n)" />
+              <TrashIcon v-if="!isExternal" class="w-5 text-red-500" @click.stop="remove(n)" />
             </div>
           </td>
         </tr>
@@ -270,7 +270,7 @@ function submitSelect () {
     </div>
   </div>
 </template>
- v-if="!isExternal"
+
 <style scoped>
 .node-name {
   max-width: calc(100vw - 24rem);
