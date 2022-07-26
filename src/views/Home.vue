@@ -1,15 +1,14 @@
 <script setup>
-import moment from 'moment'
 import request from '../utils/request.js'
-import icon from '../utils/icon.js'
-import { UploadIcon, FolderAddIcon, PencilIcon, CheckIcon, TrashIcon, XIcon, LinkIcon, LoginIcon } from '@heroicons/vue/outline'
+import ItemRow from '../components/ItemRow.vue'
+import { UploadIcon, FolderAddIcon, CheckIcon, XIcon, LoginIcon } from '@heroicons/vue/outline'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const SS = window.sessionStorage
 const opt = () => ({ headers: { token: SS.token } })
 
 let nodes = $ref([]), dir = $ref('')
-let breadcrumb = $ref([]), edit = $ref({}), uploading = $ref('')
+let breadcrumb = $ref([]), uploading = $ref('')
 if (SS.dir) {
   dir = SS.dir
   SS.dir = ''
@@ -27,7 +26,6 @@ else router.push('/@')
 
 // display
 
-const time2Str = t => moment(t).format('YYYY-MM-DD HH:mm:ss')
 const getType = name => {
   const ns = name.split('.')
   ns.shift()
@@ -37,12 +35,6 @@ const short = (x, l = 8) => {
   const type = getType(x)
   if (x.length - type.length < l) return x
   return x.substring(0, l) + '...' + type
-}
-
-function rowClass (n) {
-  let res = selected[n._id] ? 'bg-blue-100' : 'hover:bg-gray-100'
-  if (moving?._id === n._id) res += ' opacity-50'
-  return res
 }
 
 let displayNodes = $computed(() => nodes.sort((x, y) => {
@@ -60,7 +52,7 @@ let isExternal = $computed(() => {
 
 // file operations
 
-let fileInput = $ref(), copyInput = $ref()
+let fileInput = $ref()
 
 async function upload (f) {
   if (!f) return
@@ -90,7 +82,7 @@ async function newDir () {
   const res = await request.post('/yzdisk/dir', { name: '新建文件夹', dir: dir || '' }, opt())
   if (!res) return
   nodes.push({ _id: res, type: '.', name: '新建文件夹', time: Date.now(), private: false })
-  edit[res] = true
+  // todo edit[res] = true
 }
 
 async function open (n) {
@@ -123,11 +115,7 @@ async function gotoBreadcrumb (i) {
   breadcrumb.splice(i + 1)
 }
 
-async function rename (n) {
-  edit[n._id] = false
-  const div = document.getElementById('name_' + n._id)
-  const name = div.innerHTML
-  if (!name.match(/\S/) || name === n.name) return div.innerHTML = n.name
+async function rename (n, name) {
   const res = await request.put(`/yzdisk/${n.type === '.' ? 'dir' : 'file'}/${n._id}`, { name }, opt())
   if (!res) return
   n.name = name
@@ -149,16 +137,6 @@ async function remove (n) {
   const res = await request.put(`/yzdisk/${n.type === '.' ? 'dir' : 'file'}/${n._id}`, { dir: '' }, opt())
   if (!res) return
   nodes = nodes.filter(x => x._id !== n._id)
-}
-
-function copy (n) {
-  copyInput.setAttribute('type', 'text')
-  copyInput.value = window.location.origin + `/#/@?${n.type === '.' ? 'dir' : 'file'}=${n._id}`
-  copyInput.select()
-  document.execCommand('copy')
-  copyInput.setAttribute('type', 'hidden')
-  window.getSelection().removeAllRanges()
-  Swal.fire('链接已复制', '链接具有访问权限，请谨慎使用', 'success')
 }
 
 // move
@@ -203,7 +181,6 @@ function submitSelect () {
 
 <template>
   <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
-  <input type="hidden" ref="copyInput">
   <button v-if="moving" class="all-transition rounded-full fixed top-2 right-2 bg-white sm:top-5 sm:right-5 shadow-md hover:shadow-lg text-sm text-blue-500 bg-gray-100 font-bold rounded flex items-center py-2 px-4" @click="move"><LoginIcon class="w-5 mr-1" />粘贴{{ moving.type === '.' ? '目录' : '文件' }}</button>
   <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-60 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="SS.select"><!-- select -->
     <div class="text-sm text-white font-bold bg-gray-800 p-2">请选择文件</div>
@@ -244,24 +221,10 @@ function submitSelect () {
           </td>
           <td></td>
         </tr>
-        <tr v-for="n in displayNodes" class="all-transition border border-x-0 cursor-pointer group" :class="rowClass(n)" @dblclick="open(n)" @click="select(n)">
-          <td class="h-12 flex items-center">
-            <img :src="selected[n._id] ? 'icon/check.svg' : (icon[n.type.toLowerCase()] || 'icon/file.svg')" class="w-6 mx-1">
-            <div class="flex items-center px-1" :class="edit[n._id] && 'border bg-white'">
-              <div :id="'name_' + n._id" :contenteditable="edit[n._id]" class="text-sm mr-2 whitespace-nowrap overflow-hidden node-name" @keydown.enter.prevent="rename(n)">{{ n.name }}</div>
-              <CheckIcon v-if="edit[n._id]" class="w-4 text-blue-500" @click.stop="rename(n)" />
-              <PencilIcon v-if="!isExternal && !edit[n._id]" @click.stop="edit[n._id] = true" class="invisible group-hover:visible w-4 text-gray-500" />
-            </div>
-          </td>
-          <td class="text-center text-gray-500 text-sm w-10 sm:w-48">
-            <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
-            <div class="flex sm:hidden group-hover:flex items-center justify-center px-2">
-              <LoginIcon v-if="!isExternal" class="w-5 mr-1 text-gray-500" @click.stop="moving = n" />
-              <LinkIcon class="w-5 mr-1 text-blue-500" @click.stop="copy(n)" />
-              <TrashIcon v-if="!isExternal" class="w-5 text-red-500" @click.stop="remove(n)" />
-            </div>
-          </td>
-        </tr>
+        <ItemRow v-for="n in displayNodes"
+          :node="n" :selected="selected[n._id]" :moving="moving?._id === n._id" :editable="!isExternal"
+          @open="open(n)" @select="select(n)" @rename="rename" @move="moving = n" @remove="remove(n)"
+        />
       </table>
       <div v-if="!nodes.length" class="mt-20 w-full flex flex-col items-center justify-center">
         <img src="icon/cloud.svg" >
@@ -270,14 +233,3 @@ function submitSelect () {
     </div>
   </div>
 </template>
-
-<style scoped>
-.node-name {
-  max-width: calc(100vw - 24rem);
-}
-@media (max-width: 640px) {
-  .node-name {
-    max-width: calc(100vw - 12rem);
-  }
-}
-</style>
