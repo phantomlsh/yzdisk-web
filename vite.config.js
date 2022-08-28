@@ -13,5 +13,10 @@ export default defineConfig({
         rewrite: path => path.replace(/^\/yzdisk/, '')
       },
     }
+  },
+  build: {
+    rollupOptions: {
+      external: ['favicon.ico', /icon\/.*/]
+    }
   }
 })
