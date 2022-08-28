@@ -22,7 +22,7 @@ init()
 <template>
   <transition name="fade" mode="out-in">
     <div v-if="showTip" class="w-full flex items-center px-2 my-2">
-      <img src="icon/cloud.svg" class="w-20 mr-2">
+      <img :src="'icon/cloud.svg'" class="w-20 mr-2">
       <h1 class="text-xl">{{ tip }}</h1>
     </div>
     <table v-else class="table w-full">

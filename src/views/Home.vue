@@ -203,7 +203,7 @@ function submitSelect () {
     <p v-if="uploading" class="text-gray-500 text-sm">正在上传 {{ uploading }}</p>
     <div class="my-3 text-gray-500"><!-- breadcrumb -->
       <span class="cursor-pointer hover:underline" :class="!breadcrumb.length && 'text-black font-bold'" @click="gotoBreadcrumb(-1)">
-        <img src="favicon.ico" class="w-4 mr-1 inline">我的云盘
+        <img :src="'favicon.ico'" class="w-4 mr-1 inline">我的云盘
       </span>
       <span v-for="(b, i) in breadcrumb" @click="gotoBreadcrumb(i)">
         <span class="mx-1">/</span>
@@ -215,7 +215,7 @@ function submitSelect () {
         <tr v-if="breadcrumb.length" class="all-transition border border-x-0 cursor-pointer hover:bg-gray-100" @dblclick="back">
           <td class="h-10">
             <div class="px-2 flex items-center">
-              <img src="icon/return.png" class="w-6">
+              <img :src="'icon/return.png'" class="w-6">
               <div class="mx-2 text-sm">返回上级目录</div>
             </div>
           </td>
@@ -227,7 +227,7 @@ function submitSelect () {
         />
       </table>
       <div v-if="!nodes.length" class="mt-20 w-full flex flex-col items-center justify-center">
-        <img src="icon/cloud.svg" >
+        <img :src="'icon/cloud.svg'" >
         <p class="text-gray-500 text-sm">白云一片去悠悠，这里什么也没有</p>
       </div>
     </div>
