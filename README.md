@@ -1,6 +1,6 @@
 # yzdisk-web
 
-Frontend of yzdisk
+Frontend of yzdisk, an open cloud storage.
 
 ## Interface
 
