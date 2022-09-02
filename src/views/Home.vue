@@ -1,7 +1,7 @@
 <script setup>
 import request from '../utils/request.js'
 import ItemRow from '../components/ItemRow.vue'
-import { UploadIcon, FolderAddIcon, CheckIcon, XIcon, LoginIcon } from '@heroicons/vue/outline'
+import { CloudArrowUpIcon, FolderPlusIcon, CheckIcon, XMarkIcon, ArrowLeftOnRectangleIcon } from '@heroicons/vue/24/outline'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const SS = window.sessionStorage
@@ -181,12 +181,12 @@ function submitSelect () {
 
 <template>
   <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
-  <button v-if="moving" class="all-transition rounded-full fixed top-2 right-2 bg-white sm:top-5 sm:right-5 shadow-md hover:shadow-lg text-sm text-blue-500 bg-gray-100 font-bold rounded flex items-center py-2 px-4" @click="move"><LoginIcon class="w-5 mr-1" />粘贴{{ moving.type === '.' ? '目录' : '文件' }}</button>
+  <button v-if="moving" class="all-transition rounded-full fixed top-2 right-2 bg-white sm:top-5 sm:right-5 shadow-md hover:shadow-lg text-sm text-blue-500 bg-gray-100 font-bold rounded flex items-center py-2 px-4" @click="move"><ArrowLeftOnRectangleIcon class="w-5 mr-1" />粘贴{{ moving.type === '.' ? '目录' : '文件' }}</button>
   <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-60 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="SS.select"><!-- select -->
     <div class="text-sm text-white font-bold bg-gray-800 p-2">请选择文件</div>
     <div v-for="(n, _id) in selected" class="border border-x-0 flex items-center justify-between p-2">
       <span>{{ short(n.name, 9) }}</span>
-      <XIcon class="w-5 text-red-500 cursor-pointer" @click="delete selected[n._id]" />
+      <XMarkIcon class="w-5 text-red-500 cursor-pointer" @click="delete selected[n._id]" />
     </div>
     <div v-if="selectOK" class="flex items-center justify-end p-1">
       <button class="all-transition text-sm text-blue-500 font-bold rounded flex items-center py-1 px-2" @click="submitSelect"><CheckIcon class="w-5 mr-1" />确认</button>
@@ -195,10 +195,10 @@ function submitSelect () {
   <div class="p-4 min-h-screen w-screen select-none" @drop.prevent="dropFile" @dragenter.prevent @dragover.prevent>
     <div class="flex items-center mt-3 mb-1">
       <button @click="fileInput.click" class="all-transition mr-4 shadow bg-blue-500 text-white font-bold rounded flex items-center py-2 px-4 hover:shadow-lg">
-        <UploadIcon class="w-5 mr-1" />
+        <CloudArrowUpIcon class="w-5 mr-1" />
         上传文件
       </button>
-      <button @click="newDir" class="all-transition m-1 border border-gray-300 rounded-full p-2 hover:bg-gray-100 text-sm"><FolderAddIcon class="w-5" /></button>
+      <button @click="newDir" class="all-transition m-1 border border-gray-300 rounded-full p-2 hover:bg-gray-100 text-sm"><FolderPlusIcon class="w-5" /></button>
     </div>
     <p v-if="uploading" class="text-gray-500 text-sm">正在上传 {{ uploading }}</p>
     <div class="my-3 text-gray-500"><!-- breadcrumb -->

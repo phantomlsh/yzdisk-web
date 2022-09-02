@@ -1,7 +1,7 @@
 <script setup>
 import moment from 'moment'
 import icon from '../utils/icon.js'
-import { PencilIcon, CheckIcon, LoginIcon, LinkIcon, TrashIcon } from '@heroicons/vue/outline'
+import { PencilIcon, CheckIcon, ArrowRightOnRectangleIcon, LinkIcon, TrashIcon } from '@heroicons/vue/24/outline'
 const props = defineProps(['node', 'selected', 'moving', 'editable'])
 const emits = defineEmits(['open', 'select', 'rename', 'move', 'link', 'remove'])
 let n = $computed(() => props.node)
@@ -48,7 +48,7 @@ function copy () {
     <td class="text-center text-gray-500 text-sm w-10 sm:w-48">
       <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
       <div class="flex sm:hidden group-hover:flex items-center justify-center px-2">
-        <LoginIcon v-if="props.editable" class="w-5 mr-1 text-gray-500" @click.stop="emits('move')" />
+        <ArrowRightOnRectangleIcon v-if="props.editable" class="w-5 mr-1 text-gray-500" @click.stop="emits('move')" />
         <LinkIcon class="w-5 mr-1 text-blue-500" @click.stop="copy" />
         <TrashIcon v-if="props.editable" class="w-5 text-red-500" @click.stop="emits('remove')" />
       </div>

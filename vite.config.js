@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/yzdisk': {
-        target: 'http://localhost:3001/',
+        target: 'https://s.yzzx.org/yzdisk',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/yzdisk/, '')
       },
