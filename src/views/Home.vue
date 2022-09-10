@@ -2,18 +2,15 @@
 import request from '../utils/request.js'
 import ItemRow from '../components/ItemRow.vue'
 import { CloudArrowUpIcon, FolderPlusIcon, CheckIcon, XMarkIcon, ArrowLeftOnRectangleIcon } from '@heroicons/vue/24/outline'
-import { useRouter } from 'vue-router'
-const router = useRouter()
-const SS = window.sessionStorage
+import { useRouter, useRoute } from 'vue-router'
+const router = useRouter(), route = useRoute()
+const SS = window.sessionStorage, LS = window.localStorage
 const opt = () => ({ headers: { token: SS.token } })
 
-let nodes = $ref([]), dir = $ref('')
+let nodes = $ref([]), dir = $ref(''), selectConfig = $ref('')
 let breadcrumb = $ref([]), uploading = $ref('')
-if (SS.dir) {
-  dir = SS.dir
-  SS.dir = ''
-  breadcrumb.push({ _id: dir, name: '链接目录', external: true })
-}
+
+if (route.query.select) LS.select = route.query.select
 
 async function getDir () {
   const res = await request.get('/yzdisk/dir/' + (dir || ''), opt())
@@ -21,8 +18,30 @@ async function getDir () {
   return nodes = res
 }
 
-if (SS.token) getDir()
-else router.push('/@')
+function login () { // decode JWT
+  delete SS.id
+  const r = SS.token.split('.')
+  let input = r[1]
+  if (!input) return {}
+  input = input.replace(/-/g, '+').replace(/_/g, '/')
+  const pad = input.length % 4
+  if (pad) input += new Array(5 - pad).join('=')
+  const payload = JSON.parse(atob(input))
+  SS.id = payload.id
+  if (route.query.dir) { // guarantee login
+    dir = route.query.dir
+    breadcrumb.push({ _id: dir, name: '链接目录', external: true })
+  }
+  if (LS.select) {
+    selectConfig = LS.select
+    LS.select = ''
+  }
+  getDir()
+}
+
+if (route.query.token) SS.token = route.query.token
+if (!SS.token) window.location.href = 'https://cn.aauth.link/#/launch/yzdisk'
+else login()
 
 // display
 
@@ -82,7 +101,6 @@ async function newDir () {
   const res = await request.post('/yzdisk/dir', { name: '新建文件夹', dir: dir || '' }, opt())
   if (!res) return
   nodes.push({ _id: res, type: '.', name: '新建文件夹', time: Date.now(), private: false })
-  // todo edit[res] = true
 }
 
 async function open (n) {
@@ -154,8 +172,8 @@ async function move () {
 
 let selected = $ref({})
 let selectOK = $computed(() => {
-  if (!yzdisk.select) return false
-  if (yzdisk.select == 1) return Object.keys(selected).length === 1
+  if (!selectConfig) return false
+  if (selectConfig == 1) return Object.keys(selected).length === 1
   return Object.keys(selected).length
 })
 
@@ -164,9 +182,9 @@ function select (n) {
     delete selected[n._id]
     return
   }
-  if (!SS.select) return
+  if (!selectConfig) return
   if (n.type === '.') return
-  if (SS.select == 1) return selected = { [n._id]: n }
+  if (selectConfig == 1) return selected = { [n._id]: n }
   selected[n._id] = n
 }
 
@@ -182,7 +200,7 @@ function submitSelect () {
 <template>
   <input type="file" class="hidden" ref="fileInput" @change="upload(fileInput.files[0])">
   <button v-if="moving" class="all-transition rounded-full fixed top-2 right-2 bg-white sm:top-5 sm:right-5 shadow-md hover:shadow-lg text-sm text-blue-500 bg-gray-100 font-bold rounded flex items-center py-2 px-4" @click="move"><ArrowLeftOnRectangleIcon class="w-5 mr-1" />粘贴{{ moving.type === '.' ? '目录' : '文件' }}</button>
-  <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-60 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="SS.select"><!-- select -->
+  <div class="rounded-md overflow-hidden fixed bottom-2 right-2 w-60 bg-white sm:bottom-5 sm:right-5 shadow-md bg-gray-50" v-if="selectConfig"><!-- select -->
     <div class="text-sm text-white font-bold bg-gray-800 p-2">请选择文件</div>
     <div v-for="(n, _id) in selected" class="border border-x-0 flex items-center justify-between p-2">
       <span>{{ short(n.name, 9) }}</span>

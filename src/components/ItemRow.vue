@@ -25,7 +25,8 @@ let rowClass = $computed(() => {
 
 function copy () {
   copyInput.setAttribute('type', 'text')
-  copyInput.value = window.location.origin + `/#/@?${n.type === '.' ? 'dir' : 'file'}=${n._id}`
+  const base = window.location.origin + window.location.pathname + '#'
+  copyInput.value = base + '/preview?nid=' + n._id
   copyInput.select()
   document.execCommand('copy')
   copyInput.setAttribute('type', 'hidden')
