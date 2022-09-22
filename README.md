@@ -6,7 +6,7 @@ Frontend of yzdisk, an open cloud storage.
 
 ### Selector
 
-Open window or use iframe with the url `https://s.yzzx.org/disk/#/@?select=1`
+Open window or use iframe with the url `https://s.yzzx.org/disk/#/?select=1`
 
 with the following config
 - `select=1`: select one file
@@ -21,6 +21,6 @@ window.onmessage = e => {
 }
 ```
 
-### Card
+### Preview
 
-Use `<iframe>` to open the url `https://s.yzzx.org/disk/#/card/id1,id2...?token=[token]`
+Use `<iframe>` to open the url `https://s.yzzx.org/disk/#/preview/id[?token=TOKEN]`
