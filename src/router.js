@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 const index = {
-  '/preview/:nid/:token': () => import('./views/Preview.vue'),
+  '/preview/:nid': () => import('./views/Preview.vue'),
   '/': () => import('./views/Home.vue'),
 }
 

@@ -109,15 +109,8 @@ async function open (n) {
     await goto(n._id)
     breadcrumb.push(n)
   } else { // download file
-    const res = await request.get('/yzdisk/file/' + n._id, { headers: { token: SS.token }, responseType: 'blob' })
-    if (!res) return
-    const url = window.URL.createObjectURL(new Blob([res]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', n.name)
-    document.body.appendChild(link)
-    link.click()
-    setTimeout(() => { link.remove() }, 3e3)
+    const url = window.location.origin + window.location.pathname + '#/preview/' + n._id
+    window.open(url)
   }
 }
 
