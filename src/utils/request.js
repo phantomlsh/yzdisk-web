@@ -18,6 +18,7 @@ request.interceptors.response.use(r => {
 }, e => {
   NProgress.done()
   alert(e.response?.data || '网络错误')
+  return false
 })
 
 export default request
