@@ -4,11 +4,18 @@ import { CloudArrowDownIcon } from '@heroicons/vue/24/outline'
 import request from '../utils/request.js'
 import icon from '../utils/icon.js'
 
+const SS = window.sessionStorage, LS = window.localStorage
 let data = $ref({}), str = $ref(''), mode = $ref('')
 let blob = null
 const route = useRoute()
-if (route.query.token) window.sessionStorage.token = route.query.token
-const nid = route.params.nid, token = window.sessionStorage.token
+const nid = route.params.nid
+if (route.query.token) SS.token = route.query.token
+const token = SS.token
+if (token) init()
+else {
+  LS.preview = nid
+  window.location.href = 'https://cn.aauth.link/#/launch/yzdisk'
+}
 const src = 'https://s.yzzx.org/yzdisk/file/' + nid + '?token=' + token
 
 const T = {
@@ -18,7 +25,6 @@ const T = {
   office: ['ppt', 'pptx', 'xls', 'xlsx', 'csv', 'doc', 'docx']
 }
 
-init()
 async function init () {
   const res = await request.get('/yzdisk/query/' + nid, { headers: { token }})
   if (!res || !res[nid]) {
@@ -27,7 +33,6 @@ async function init () {
     return
   }
   data = res[nid]
-  console.log(data)
   data.type = data.type.toLowerCase()
   if (data.type === 'txt') mode = 'txt'
   if (data.type === '.') mode = '.'

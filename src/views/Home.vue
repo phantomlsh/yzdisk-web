@@ -36,6 +36,10 @@ function login () { // decode JWT
     selectConfig = LS.select
     LS.select = ''
   }
+  if (LS.preview) {
+    router.push('/preview/' + LS.preview)
+    LS.preview = ''
+  }
   getDir()
 }
 
