@@ -48,7 +48,7 @@ else login()
 const getType = name => {
   const ns = name.split('.')
   ns.shift()
-  return ns.pop() || ''
+  return (ns.pop() || '').toLowerCase()
 }
 const short = (x, l = 8) => {
   const type = getType(x)
@@ -78,6 +78,7 @@ async function upload (f) {
   uploading = f.name
   const formData = new FormData()
   formData.append('file', f)
+  formData.append('name', f.name)
   if (dir) formData.append('dir', dir)
   const _dir = dir
   const res = await request.post('/yzdisk/file', formData, { headers: { 'Content-Type': 'multipart/form-data', token: SS.token } })
