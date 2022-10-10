@@ -80,7 +80,7 @@ async function download () {
       <pre v-if="mode === 'txt' || mode === 'code'" class="p-4">{{ str }}</pre>
       <div v-if="mode === 'image' || mode === 'video'" class="w-full h-full flex items-center justify-center bg-gray-200">
         <img v-if="mode === 'image'" :src="src" class="max-w-full max-h-full">
-        <video class="max-w-full max-h-full" controls>
+        <video v-if="mode === 'video'" class="max-w-full max-h-full" controls>
           <source :src="src">
         </video>
       </div>
