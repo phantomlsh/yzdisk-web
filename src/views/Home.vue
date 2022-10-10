@@ -48,7 +48,7 @@ else login()
 const getType = name => {
   const ns = name.split('.')
   ns.shift()
-  return ns.pop() || ''
+  return (ns.pop() || '').toLowerCase()
 }
 const short = (x, l = 8) => {
   const type = getType(x)
@@ -78,6 +78,7 @@ async function upload (f) {
   uploading = f.name
   const formData = new FormData()
   formData.append('file', f)
+  formData.append('name', f.name)
   if (dir) formData.append('dir', dir)
   const _dir = dir
   const res = await request.post('/yzdisk/file', formData, { headers: { 'Content-Type': 'multipart/form-data', token: SS.token } })
@@ -109,15 +110,8 @@ async function open (n) {
     await goto(n._id)
     breadcrumb.push(n)
   } else { // download file
-    const res = await request.get('/yzdisk/file/' + n._id, { headers: { token: SS.token }, responseType: 'blob' })
-    if (!res) return
-    const url = window.URL.createObjectURL(new Blob([res]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', n.name)
-    document.body.appendChild(link)
-    link.click()
-    setTimeout(() => { link.remove() }, 3e3)
+    const url = window.location.origin + window.location.pathname + '#/preview/' + n._id
+    window.open(url)
   }
 }
 

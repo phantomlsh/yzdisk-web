@@ -2,6 +2,7 @@ export default {
   'txt': 'icon/file.svg', // default
   '.': 'icon/folder.svg', // folder
   'pdf': 'icon/acrobat.svg',
+  'md': 'icon/file.svg',
   'c': 'icon/c.svg',
   'cpp': 'icon/c.svg',
   'h': 'icon/c.svg',
@@ -32,6 +33,7 @@ export default {
   'avi': 'icon/youtube.svg',
   'flv': 'icon/youtube.svg',
   'webm': 'icon/youtube.svg',
+  'mkv': 'icon/youtube.svg',
   'zip': 'icon/zip.svg',
   'rar': 'icon/zip.svg',
   '7z': 'icon/zip.svg',
