@@ -7,6 +7,7 @@ import icon from '../utils/icon.js'
 let data = $ref({}), str = $ref(''), mode = $ref('')
 let blob = null
 const route = useRoute()
+if (route.query.token) window.sessionStorage.token = route.query.token
 const nid = route.params.nid, token = window.sessionStorage.token
 const src = 'https://s.yzzx.org/yzdisk/file/' + nid + '?token=' + token
 
