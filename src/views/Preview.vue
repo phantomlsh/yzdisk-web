@@ -3,6 +3,8 @@ import { useRoute } from 'vue-router'
 import { CloudArrowDownIcon } from '@heroicons/vue/24/outline'
 import request from '../utils/request.js'
 import icon from '../utils/icon.js'
+import hljsVue from '@highlightjs/vue-plugin'
+const Highlight = hljsVue.component
 
 const SS = window.sessionStorage, LS = window.localStorage
 let data = $ref({}), str = $ref(''), mode = $ref('')
@@ -19,10 +21,15 @@ else {
 const src = 'https://s.yzzx.org/yzdisk/file/' + nid + '?token=' + token
 
 const T = {
-  code: ['html', 'htm', 'c', 'cpp', 'h', 'css', 'js', 'py'],
+  code: ['html', 'htm', 'c', 'cpp', 'h', 'css', 'js', 'json', 'py'],
   image: ['jpeg', 'jpg', 'png', 'gif', 'tif', 'tiff', 'svg'],
   video: ['mp4', 'mov', 'avi', 'flv', 'webm', 'mkv'],
   office: ['ppt', 'pptx', 'xls', 'xlsx', 'csv', 'doc', 'docx']
+}
+
+const languages = {
+  js: 'javascript',
+  py: 'python'
 }
 
 async function init () {
@@ -39,6 +46,10 @@ async function init () {
   if (data.type === 'pdf') mode = 'pdf'
   for (const t in T) {
     if (T[t].includes(data.type)) mode = t
+  }
+  if (mode === 'code') {
+    import('highlight.js/styles/monokai-sublime.css')
+    import('highlight.js/lib/common')
   }
   if (['txt', 'code'].includes(mode)) {
     blob = await getBlob()
@@ -82,7 +93,8 @@ async function download () {
       </button>
     </div>
     <div class="grow w-full overflow-auto">
-      <pre v-if="mode === 'txt' || mode === 'code'" class="p-4">{{ str }}</pre>
+      <pre v-if="mode === 'txt'" class="p-4">{{ str }}</pre>
+      <Highlight v-if="mode === 'code'" class="p-4" :language="languages[data.type] || data.type" :code="str" />
       <div v-if="mode === 'image' || mode === 'video'" class="w-full h-full flex items-center justify-center bg-gray-200">
         <img v-if="mode === 'image'" :src="src" class="max-w-full max-h-full">
         <video v-if="mode === 'video'" class="max-w-full max-h-full" controls>
