@@ -65,7 +65,7 @@ const getBlob = () => request.get('/yzdisk/file/' + nid, { headers: { token }, r
 
 async function download () {
   if (data.type === '.') {
-    window.location.href = '/#/?dir=' + nid + '&token=' + token
+    window.location.href = '/disk/#/?dir=' + nid + '&token=' + token
     return
   }
   const res = blob || await getBlob()

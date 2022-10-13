@@ -26,7 +26,7 @@ let rowClass = $computed(() => {
 function copy () {
   copyInput.setAttribute('type', 'text')
   const base = window.location.origin + window.location.pathname + '#'
-  copyInput.value = base + '/preview?nid=' + n._id
+  copyInput.value = base + '/preview/' + n._id
   copyInput.select()
   document.execCommand('copy')
   copyInput.setAttribute('type', 'hidden')
