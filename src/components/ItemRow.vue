@@ -49,9 +49,15 @@ function copy () {
     <td class="text-center text-gray-500 text-sm w-10 sm:w-48">
       <div class="hidden sm:block group-hover:hidden">{{ time2Str(n.time) }}</div>
       <div class="flex sm:hidden group-hover:flex items-center justify-center px-2">
-        <ArrowRightOnRectangleIcon v-if="props.editable" class="w-5 mr-1 text-gray-500" @click.stop="emits('move')" />
-        <LinkIcon class="w-5 mr-1 text-blue-500" @click.stop="copy" />
-        <TrashIcon v-if="props.editable" class="w-5 text-red-500" @click.stop="emits('remove')" />
+        <button @click.stop="emits('move')" title="移动">
+          <ArrowRightOnRectangleIcon v-if="props.editable" class="w-5 mr-1 text-gray-500" />
+        </button>
+        <button @click.stop="copy" title="复制链接">
+          <LinkIcon class="w-5 mr-1 text-blue-500" />
+        </button>
+        <button class="w-5 text-red-500" title="删除">
+          <TrashIcon v-if="props.editable" @click.stop="emits('remove')" />
+        </button>
       </div>
     </td>
   </tr>
