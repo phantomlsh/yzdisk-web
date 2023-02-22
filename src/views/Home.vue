@@ -77,8 +77,10 @@ let isExternal = $computed(() => {
 
 let fileInput = $ref()
 
+const MB = 1024 * 1024
 async function upload (f) {
   if (!f) return
+  if (f.size > 50 * MB) return Swal.fire('文件过大', '仅允许上传50MB以下的文件', 'error')
   uploading = f.name
   const formData = new FormData()
   formData.append('file', f)
