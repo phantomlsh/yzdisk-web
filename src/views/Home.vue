@@ -44,7 +44,7 @@ function login () { // decode JWT
 }
 
 if (route.query.token) SS.token = route.query.token
-if (!SS.token) window.location.href = 'https://cn.aauth.link/#/launch/yzdisk'
+if (!SS.token) window.location.href = 'https://auth.njsc.ltd/#/launch/yzdisk'
 else login()
 
 // display

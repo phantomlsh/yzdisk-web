@@ -16,7 +16,7 @@ const token = SS.token
 if (token) init()
 else {
   LS.preview = nid
-  window.location.href = 'https://cn.aauth.link/#/launch/yzdisk'
+  window.location.href = 'https://auth.njsc.ltd/#/launch/yzdisk'
 }
 const src = 'https://s.yzzx.org/yzdisk/file/' + nid + '?token=' + token
 
